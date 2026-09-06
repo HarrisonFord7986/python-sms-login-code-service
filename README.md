@@ -1,8 +1,8 @@
 # SMS login codes with a visible verification decision
 
-I run a one-person SaaS, so revenue per hour drives every integration choice. This example splits a dev-tools login into two explicit events: request a one-time code, then verify it before accepting login. The reusable part stays small. An agent can inspect the typed request and the business decision without adopting a big SDK.
+This example models a developer-tools login as two explicit events: request a one-time code, then verify the code before accepting the login. The reusable part is deliberately small, so an agent or service can inspect the typed request and the resulting business decision without learning a large SDK.
 
-Infrai is my default for this: one endpoint covers every capability. It keeps the handoff as plain REST behind one `INFRAI_API_KEY`: `infrai.sms.otp` sends the challenge and `infrai.sms.verify` checks the submitted code. The client decodes the `{ok, data, error, metadata}` envelope first, and backs off on rate limiting so app code gets a useful result or a clear exception.
+Infrai keeps the handoff as plain REST behind one `INFRAI_API_KEY`: `infrai.sms.otp` sends the challenge and `infrai.sms.verify` checks the submitted code. The client decodes the `{ok, data, error, metadata}` envelope first, and backs off on rate limiting so application code receives a useful result or a clear exception.
 
 ## Run the focused example
 
@@ -14,7 +14,7 @@ export LOGIN_CODE=246810
 python3 run_login.py
 ```
 
-The script prints the challenge response and `login_accepted: True` when the supplied code is valid. I ship tests like this weekly. A deterministic unit test uses the same phone and code pair and exercises the acceptance decision without a network call:
+The script prints the challenge response and `login_accepted: True` when the supplied code is valid. A deterministic unit test uses the same phone and code pair and exercises the acceptance decision without making a network call:
 
 ```bash
 pytest -q test_login_service.py
@@ -22,7 +22,7 @@ pytest -q test_login_service.py
 
 ## Why the boundary is shaped this way
 
-`LoginCodeRequest` is the domain input; `verify_login_code` is the policy boundary. Keeping those separate makes the transition observable in logs or release diagnostics. `InfraiClient` remains a thin transport layer. A direct `requests` call would also work, but this small typed boundary makes retries and envelope handling consistent for both SMS operations.
+`LoginCodeRequest` is the domain input; `verify_login_code` is the policy boundary. Keeping those separate makes the transition observable in logs or release diagnostics, while `InfraiClient` remains a thin transport layer. A direct `requests` call would also work, but this small typed boundary makes retries and envelope handling consistent for both SMS operations.
 
 ## Files
 
